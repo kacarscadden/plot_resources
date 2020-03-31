@@ -1,0 +1,50 @@
+---
+title: "Simulating conidia count data"
+author: "Kelly Carscadden"
+date: '2020-03-29'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Simulating data to illustrate a specific line graph construction. Example data is conidia counts from different plate replicates at different dilutions over time.
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+#imagining 3 different sample IDs, 
+#3 plate reps of each dilution
+#3 dilutions
+#2 different time points, and the sample IDs start at different times
+
+conidia <- data.frame(prep_ID = rep(letters[1:3], each = 18),
+           day_from_1 = rep(c(1,14,35,42,44,46), each = 9),
+           dilution = as.factor(rep(rep(c(1,2,3), each=3), 6)),
+           plate_rep = rep(c(1,2,3), 18),
+           counts = rnorm(18, mean = 50, sd = 8)
+)
+#made a dilution a factor so it could modify plotting point shape
+
+head(conidia, n=12)           
+```
+
+Creating a line graph to show counts over time, per prep_ID, averaged across plate_rep
+
+```{r}
+pd <- position_dodge(1.5)
+
+conidia %>%
+  group_by(prep_ID, dilution, day_from_1) %>%
+  summarise(mean = mean(counts),
+            sd = sd(counts)) %>%
+  ggplot(aes(x = day_from_1, y = mean, 
+             col = prep_ID, pch = dilution))+
+  geom_errorbar(aes(ymin = mean-sd, ymax = mean + sd), 
+                width=.1, position = pd)+
+  geom_point(position = pd)+
+  geom_line(position = pd, aes(group = interaction (prep_ID, dilution)))
+```
